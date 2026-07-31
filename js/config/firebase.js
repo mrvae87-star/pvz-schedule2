@@ -1,14 +1,13 @@
 // ========================================
 // КОНФИГУРАЦИЯ FIREBASE
 // ========================================
-
 export const firebaseConfig = {
-    apiKey: "AIzaSyDnBMku_utsiVxHEfvPgAhQy89UAKSzBws",
-    authDomain: "pvz-schedule-38959.firebaseapp.com",
-    projectId: "pvz-schedule-38959",
-    storageBucket: "pvz-schedule-38959.firebasestorage.app",
-    messagingSenderId: "65668659955",
-    appId: "1:65668659955:web:18cd4fe18dcf91e3aa1586"
+    apiKey: "AIzaSyAf8UcXSI1VpTe_qytCxeomUt_ENjKgoZY",
+    authDomain: "pvz-schedule2.firebaseapp.com",
+    projectId: "pvz-schedule2",
+    storageBucket: "pvz-schedule2.firebasestorage.app",
+    messagingSenderId: "680318009283",
+    appId: "1:680318009283:web:f5f8dea852b505f89e8776"
 };
 
 let firebaseApp = null;
