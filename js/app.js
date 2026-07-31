@@ -863,49 +863,84 @@ async function saveToFirestore() {
     }
 }
 
+// ========================================
+// ЗАГРУЗКА ДАННЫХ ИЗ FIRESTORE (ИСПРАВЛЕННАЯ)
+// ========================================
+
 async function loadFromFirestore() {
     isLoading = true;
     try {
         const db = firebase.firestore();
 
+        // === ЗАГРУЗКА СОТРУДНИКОВ ===
         const employeesDoc = await db.collection("appData").doc("globalEmployees").get();
         if (employeesDoc.exists) {
             globalEmployees = employeesDoc.data().employees || [];
+            console.log('✅ Загружено сотрудников:', globalEmployees.length);
         } else {
+            console.log('⚠️ Нет данных о сотрудниках, создаём тестовые...');
             globalEmployees = getDefaultEmployees();
             await saveToFirestore();
         }
 
+        // === ЗАГРУЗКА ПВЗ ===
         const pvzDoc = await db.collection("appData").doc("allPVZData").get();
         if (pvzDoc.exists) {
             allPVZData = pvzDoc.data().data || {};
+            console.log('✅ Загружено ПВЗ:', Object.keys(allPVZData));
         } else {
+            console.log('⚠️ Нет данных о ПВЗ, создаём тестовые...');
             allPVZData = getDefaultPVZData();
             await saveToFirestore();
         }
 
+        // === ЗАГРУЗКА ТЕКУЩЕГО ПВЗ ===
         const currentPVZDoc = await db.collection("appData").doc("currentPVZ").get();
-        currentPVZ = (currentPVZDoc.exists && allPVZData[currentPVZDoc.data().name]) 
-            ? currentPVZDoc.data().name 
-            : Object.keys(allPVZData)[0];
+        if (currentPVZDoc.exists && allPVZData[currentPVZDoc.data().name]) {
+            currentPVZ = currentPVZDoc.data().name;
+        } else {
+            currentPVZ = Object.keys(allPVZData)[0] || "ПВЗ Центральный";
+            await saveToFirestore();
+        }
+        console.log('✅ Текущий ПВЗ:', currentPVZ);
 
+        // === ЗАГРУЗКА ЗАРПЛАТЫ ===
         const salaryDoc = await db.collection("appData").doc("salaryData").get();
-        if (salaryDoc.exists) salaryData = salaryDoc.data().data || {};
+        if (salaryDoc.exists) {
+            salaryData = salaryDoc.data().data || {};
+        }
 
+        // === ЗАГРУЗКА ПОДРАБОТОК ===
         const extraDoc = await db.collection("appData").doc("extraWorks").get();
-        if (extraDoc.exists) extraWorks = extraDoc.data().data || {};
+        if (extraDoc.exists) {
+            extraWorks = extraDoc.data().data || {};
+        }
 
+        // === ЗАГРУЗКА ШТРАФОВ ===
         const finesDoc = await db.collection("appData").doc("fines").get();
-        if (finesDoc.exists) fines = finesDoc.data().data || {};
+        if (finesDoc.exists) {
+            fines = finesDoc.data().data || {};
+        }
 
+        // === ЗАГРУЗКА ЭКСТРЕННЫХ КОНТАКТОВ ===
         const emergencyDoc = await db.collection("appData").doc("emergencyContacts").get();
-        if (emergencyDoc.exists) emergencyContacts = emergencyDoc.data().data || {};
+        if (emergencyDoc.exists) {
+            emergencyContacts = emergencyDoc.data().data || {};
+        }
 
         isLoading = false;
-        console.log("✅ Данные загружены из Firestore");
+        console.log('✅ Все данные загружены из Firestore');
+        console.log('📊 ПВЗ в системе:', Object.keys(allPVZData));
         return true;
+
     } catch (error) {
-        console.error("❌ Ошибка загрузки:", error);
+        console.error('❌ ОШИБКА загрузки данных:', error);
+        console.log('⚠️ Использую локальные данные по умолчанию');
+        
+        // Если Firebase не работает - используем локальные данные
+        globalEmployees = getDefaultEmployees();
+        allPVZData = getDefaultPVZData();
+        currentPVZ = Object.keys(allPVZData)[0] || "ПВЗ Центральный";
         isLoading = false;
         return false;
     }
