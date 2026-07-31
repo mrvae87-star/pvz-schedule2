@@ -14,6 +14,13 @@ import {
 } from './config/constants.js';
 
 // ========================================
+// НАСТРОЙКИ CLOUDFLARE WORKER
+// ========================================
+
+// ⚠️ ВСТАВЬ СВОЙ URL WORKER СЮДА!
+const PROXY_URL = "https://zvonok-proxy.ваше-имя.workers.dev";
+
+// ========================================
 // ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ
 // ========================================
 
@@ -1102,7 +1109,7 @@ function checkMissedCheckins() {
 }
 
 // ========================================
-// УВЕДОМЛЕНИЕ ЧЕРЕЗ ПРОКСИ (ОБХОД CORS)
+// УВЕДОМЛЕНИЕ ЧЕРЕЗ CLOUDFLARE WORKER
 // ========================================
 
 function notifyManager(employeeName, pvzName) {
@@ -1115,11 +1122,27 @@ function notifyManager(employeeName, pvzName) {
     console.log(`📞 [${new Date().toLocaleTimeString()}] Уведомление для ${employeeName}`);
     console.log(`📞 ПВЗ: ${pvzName}, Открытие: ${openTime}, Дедлайн: ${deadlineTime}`);
     console.log(`📞 Номер руководителя: +${phone}`);
+    console.log(`🔗 Прокси: ${PROXY_URL}`);
     
-    // Используем прокси для обхода CORS
-    const proxyUrl = new URL(`proxy.html?action=call&phone=${phone}`, window.location.href).href;
-    window.open(proxyUrl, '_blank');
-    showNotification(`📞 Открыта страница звонка для ${employeeName}`, false);
+    // Отправляем звонок через Cloudflare Worker
+    const url = `${PROXY_URL}?action=call&phone=${phone}`;
+    console.log('📞 Запрос к прокси:', url);
+    
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            console.log('✅ Ответ от Zvonok:', data);
+            if (data.status === 'success') {
+                showNotification(`📞 Звонок отправлен руководителю! (${employeeName})`, false);
+            } else {
+                console.warn('⚠️ Не удалось отправить звонок:', data);
+                fallbackNotify(employeeName, pvzName, message, data);
+            }
+        })
+        .catch(error => {
+            console.error('❌ Ошибка:', error);
+            fallbackNotify(employeeName, pvzName, message, error.message);
+        });
     
     // Логируем
     const logs = JSON.parse(localStorage.getItem('checkinLogs') || '[]');
@@ -1131,7 +1154,7 @@ function notifyManager(employeeName, pvzName) {
         time: new Date().toISOString(),
         message: message,
         notified: true,
-        method: 'proxy'
+        method: 'cloudflare_worker'
     });
     localStorage.setItem('checkinLogs', JSON.stringify(logs));
 }
@@ -1510,37 +1533,57 @@ function savePvzTimes() {
 }
 
 // ========================================
-// ТЕСТОВАЯ ФУНКЦИЯ (через прокси)
+// ТЕСТОВАЯ ФУНКЦИЯ (через Cloudflare Worker)
 // ========================================
 
 window.testZvonokCall = function() {
     const phone = MANAGER_PHONE || "79299007708";
     
-    console.log('📞 Отправка звонка через прокси...');
+    console.log('📞 Отправка звонка через Cloudflare Worker...');
     console.log('📞 Номер: +' + phone);
+    console.log('🔗 Прокси:', PROXY_URL);
     
-    // Используем прокси для обхода CORS
-    const proxyUrl = new URL(`proxy.html?action=call&phone=${phone}`, window.location.href).href;
+    const url = `${PROXY_URL}?action=call&phone=${phone}`;
+    console.log('📞 Запрос к прокси:', url);
     
-    console.log('📞 Открываем прокси:', proxyUrl);
-    
-    // Открываем прокси в новой вкладке
-    window.open(proxyUrl, '_blank');
-    alert('✅ Страница прокси открыта! Звонок отправляется...');
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            console.log('✅ Ответ от Zvonok:', data);
+            if (data.status === 'success') {
+                alert('✅ Звонок отправлен! Проверьте телефон +' + phone);
+            } else {
+                alert('⚠️ Ответ от сервера: ' + JSON.stringify(data));
+            }
+        })
+        .catch(error => {
+            console.error('❌ Ошибка:', error);
+            alert('❌ Ошибка: ' + error.message);
+        });
 };
 
 // ========================================
-// ПРОВЕРКА СТАТУСА (через прокси)
+// ПРОВЕРКА СТАТУСА (через Cloudflare Worker)
 // ========================================
 
 window.checkCallStatus = function(phone = MANAGER_PHONE) {
-    console.log('📊 Проверка статуса через прокси...');
+    const url = `${PROXY_URL}?action=status&phone=${phone}`;
     
-    const proxyUrl = `/proxy.html?action=status&phone=${phone}`;
-    window.open(proxyUrl, '_blank');
-    alert('📊 Страница прокси открыта!');
+    console.log('📊 Проверка статуса через прокси:', url);
+    
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            console.log('📊 Статус звонков:', data);
+            alert('📊 Статус: ' + JSON.stringify(data, null, 2));
+        })
+        .catch(error => {
+            console.error('❌ Ошибка:', error);
+            alert('❌ Ошибка проверки статуса');
+        });
 };
 
+console.log('📞 Cloudflare Worker URL:', PROXY_URL);
 console.log('📞 Для теста звонка выполните: testZvonokCall()');
 console.log('📞 Для проверки статуса выполните: checkCallStatus()');
 console.log('📞 Номер руководителя: +' + MANAGER_PHONE);
