@@ -18,7 +18,7 @@ import {
 // ========================================
 
 // ⚠️ ВСТАВЬ СВОЙ URL WORKER СЮДА!
-const PROXY_URL = "https://zvonok-proxy.ваше-имя.workers.dev";
+const PROXY_URL = "https://zvonok-proxy.arendaruno.workers.dev";
 
 // ========================================
 // ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ
