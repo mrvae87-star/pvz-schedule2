@@ -1117,7 +1117,7 @@ function notifyManager(employeeName, pvzName) {
     console.log(`📞 Номер руководителя: +${phone}`);
     
     // Используем прокси для обхода CORS
-    const proxyUrl = `/proxy.html?action=call&phone=${phone}`;
+    const proxyUrl = new URL(`proxy.html?action=call&phone=${phone}`, window.location.href).href;
     window.open(proxyUrl, '_blank');
     showNotification(`📞 Открыта страница звонка для ${employeeName}`, false);
     
@@ -1520,7 +1520,7 @@ window.testZvonokCall = function() {
     console.log('📞 Номер: +' + phone);
     
     // Используем прокси для обхода CORS
-    const proxyUrl = `/proxy.html?action=call&phone=${phone}`;
+    const proxyUrl = new URL(`proxy.html?action=call&phone=${phone}`, window.location.href).href;
     
     console.log('📞 Открываем прокси:', proxyUrl);
     
